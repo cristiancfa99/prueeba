@@ -1,38 +1,29 @@
 from flask import Flask, request, jsonify, render_template
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
-app = Flask(__name__)
-
-# Conexión a la base de datos PostgreSQL
 import os
-from flask import Flask, request, jsonify, render_template
-import psycopg2
-from psycopg2.extras import RealDictCursor
-
 
 app = Flask(__name__)
 
+# Ruta para la página principal
 @app.route('/')
 def home():
-    # Your code to handle the root path request
     return "Welcome to my Flask app!"
 
 # Conexión a la base de datos PostgreSQL usando variables de entorno
 def connect_db():
     try:
         conn = psycopg2.connect(
-            dbname=os.getenv('DB_NAME', 'bouinetzwnfsu76o1zlr'),
-            user=os.getenv('DB_USER', 'u6nzvrfvpmi9ucxmomlu'),
-            password=os.getenv('DB_PASSWORD', 'ieafyev5G4hqdpeoADfzxlBDkLQfO9'),
-            host=os.getenv('DB_HOST', 'bouinetzwnfsu76o1zlr-postgresql.services.clever-cloud.com'),
-            port=os.getenv('DB_PORT', '50013')
+            dbname=os.getenv('DB_NAME'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            host=os.getenv('DB_HOST'),
+            port=os.getenv('DB_PORT')
         )
         return conn
     except Exception as e:
         print(f"Error al conectar a la base de datos: {e}")
         return None
-
 
 # Ruta para listar todas las películas
 @app.route('/api/peliculas', methods=['GET'])
@@ -127,4 +118,4 @@ def cargar_serie():
     return render_template('cargar_serie.html')
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=os.getenv('PORT', 5000))
