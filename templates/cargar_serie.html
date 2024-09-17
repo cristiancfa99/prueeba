@@ -3,42 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargar Serie</title>
+    <title>Gestión de Series</title>
 </head>
 <body>
-    <h1>Cargar Serie</h1>
-    <form id="serieForm">
-        <label for="titulo">Título:</label>
-        <input type="text" id="titulo" name="titulo" required><br><br>
-        
-        <label for="director">Director:</label>
-        <input type="text" id="director" name="director" required><br><br>
-        
-        <label for="genero">Género:</label>
-        <input type="text" id="genero" name="genero" required><br><br>
-        
-        <label for="temporadas">Temporadas:</label>
-        <input type="number" id="temporadas" name="temporadas" required><br><br>
-        
-        <label for="episodios">Episodios:</label>
-        <input type="number" id="episodios" name="episodios" required><br><br>
-        
-        <label for="año_estreno">Año de Estreno:</label>
-        <input type="number" id="año_estreno" name="año_estreno" required><br><br>
+    <h1>Gestión de Series</h1>
 
-        <label for="descripcion">Descripción:</label>
-        <textarea id="descripcion" name="descripcion" required></textarea><br><br>
-        
-        <button type="submit">Cargar Serie</button>
-    </form>
+    <!-- Formulario para agregar una serie -->
+    <section>
+        <h2>Cargar Serie</h2>
+        <form id="serieForm">
+            <label for="titulo">Título:</label>
+            <input type="text" id="titulo" name="titulo" required><br><br>
+            
+            <label for="director">Director:</label>
+            <input type="text" id="director" name="director" required><br><br>
+            
+            <label for="genero">Género:</label>
+            <input type="text" id="genero" name="genero" required><br><br>
+            
+            <label for="temporadas">Temporadas:</label>
+            <input type="number" id="temporadas" name="temporadas" required><br><br>
+            
+            <label for="episodios">Episodios:</label>
+            <input type="number" id="episodios" name="episodios" required><br><br>
+            
+            <label for="año_estreno">Año de Estreno:</label>
+            <input type="number" id="año_estreno" name="año_estreno" required><br><br>
 
-    <p id="mensaje"></p>
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion" required></textarea><br><br>
+            
+            <button type="submit">Cargar Serie</button>
+        </form>
+        <p id="mensajeSerie"></p>
+    </section>
+
+    <!-- Formulario para actualizar una serie -->
+    <section>
+        <h2>Actualizar Serie</h2>
+        <form id="updateSerieForm">
+            <label for="updateId">ID:</label>
+            <input type="number" id="updateId" name="id" required><br><br>
+
+            <label for="updateTitulo">Título:</label>
+            <input type="text" id="updateTitulo" name="titulo" required><br><br>
+            
+            <label for="updateDirector">Director:</label>
+            <input type="text" id="updateDirector" name="director" required><br><br>
+            
+            <label for="updateGenero">Género:</label>
+            <input type="text" id="updateGenero" name="genero" required><br><br>
+            
+            <label for="updateTemporadas">Temporadas:</label>
+            <input type="number" id="updateTemporadas" name="temporadas" required><br><br>
+            
+            <label for="updateEpisodios">Episodios:</label>
+            <input type="number" id="updateEpisodios" name="episodios" required><br><br>
+            
+            <label for="updateAñoEstreno">Año de Estreno:</label>
+            <input type="number" id="updateAñoEstreno" name="año_estreno" required><br><br>
+
+            <label for="updateDescripcion">Descripción:</label>
+            <textarea id="updateDescripcion" name="descripcion" required></textarea><br><br>
+            
+            <button type="submit">Actualizar Serie</button>
+        </form>
+        <p id="mensajeUpdateSerie"></p>
+    </section>
+
+    <!-- Formulario para eliminar una serie -->
+    <section>
+        <h2>Eliminar Serie</h2>
+        <form id="deleteSerieForm">
+            <label for="deleteId">ID:</label>
+            <input type="number" id="deleteId" name="id" required><br><br>
+            
+            <button type="submit">Eliminar Serie</button>
+        </form>
+        <p id="mensajeDeleteSerie"></p>
+    </section>
 
     <script>
-        const formSerie = document.getElementById('serieForm');
-        const mensajeSerie = document.getElementById('mensaje');
-
-        formSerie.addEventListener('submit', function(event) {
+        // Función para agregar una serie
+        document.getElementById('serieForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
             const datosSerie = {
@@ -60,16 +107,65 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    mensajeSerie.textContent = `Error: ${data.error}`;
-                } else {
-                    mensajeSerie.textContent = 'Serie cargada exitosamente';
-                }
+                const mensaje = document.getElementById('mensajeSerie');
+                mensaje.textContent = data.error ? `Error: ${data.error}` : 'Serie cargada exitosamente';
             })
             .catch(error => {
-                mensajeSerie.textContent = `Error: ${error}`;
+                document.getElementById('mensajeSerie').textContent = `Error: ${error}`;
+            });
+        });
+
+        // Función para actualizar una serie
+        document.getElementById('updateSerieForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('updateId').value;
+            const datosSerie = {
+                titulo: document.getElementById('updateTitulo').value,
+                director: document.getElementById('updateDirector').value,
+                genero: document.getElementById('updateGenero').value,
+                temporadas: document.getElementById('updateTemporadas').value,
+                episodios: document.getElementById('updateEpisodios').value,
+                año_estreno: document.getElementById('updateAñoEstreno').value,
+                descripcion: document.getElementById('updateDescripcion').value
+            };
+
+            fetch(`/api/series/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datosSerie)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const mensaje = document.getElementById('mensajeUpdateSerie');
+                mensaje.textContent = data.error ? `Error: ${data.error}` : 'Serie actualizada exitosamente';
+            })
+            .catch(error => {
+                document.getElementById('mensajeUpdateSerie').textContent = `Error: ${error}`;
+            });
+        });
+
+        // Función para eliminar una serie
+        document.getElementById('deleteSerieForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('deleteId').value;
+
+            fetch(`/api/series/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                const mensaje = document.getElementById('mensajeDeleteSerie');
+                mensaje.textContent = data.error ? `Error: ${data.error}` : 'Serie eliminada exitosamente';
+            })
+            .catch(error => {
+                document.getElementById('mensajeDeleteSerie').textContent = `Error: ${error}`;
             });
         });
     </script>
 </body>
 </html>
+
