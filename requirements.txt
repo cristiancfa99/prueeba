@@ -1,4 +1,4 @@
-﻿altgraph==0.17.4
+altgraph==0.17.4
 asttokens==2.4.1
 blinker==1.8.2
 certifi==2024.6.2
@@ -45,8 +45,6 @@ pyinstaller-hooks-contrib==2024.7
 PyMySQL==1.1.0
 pypiwin32==223
 python-dateutil==2.9.0.post0
-pywin32==306
-pywin32-ctypes==0.2.2
 pyzmq==26.2.0
 requests==2.32.3
 six==1.16.0
@@ -59,3 +57,4 @@ urllib3==2.2.2
 virtualenv==20.26.3
 wcwidth==0.2.13
 Werkzeug==3.0.4
+
