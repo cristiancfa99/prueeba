@@ -1,22 +1,9 @@
 from flask import Flask, request, jsonify, render_template
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
-app = Flask(__name__)
-
-# Conexión a la base de datos PostgreSQL
 import os
-from flask import Flask, request, jsonify, render_template
-import psycopg2
-from psycopg2.extras import RealDictCursor
-
 
 app = Flask(__name__)
-
-@app.route('/')
-def home():
-    # Your code to handle the root path request
-    return "Welcome to my Flask app!"
 
 # Conexión a la base de datos PostgreSQL usando variables de entorno
 def connect_db():
@@ -33,7 +20,7 @@ def connect_db():
         print(f"Error al conectar a la base de datos: {e}")
         return None
 
-# Función CRUD: Crear una nueva película
+# Funciones CRUD
 def create_movie(data):
     conn = connect_db()
     if conn:
@@ -55,7 +42,6 @@ def create_movie(data):
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Función CRUD: Leer todas las películas
 def read_movies():
     conn = connect_db()
     if conn:
@@ -71,7 +57,6 @@ def read_movies():
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Función CRUD: Crear una nueva serie
 def create_series(data):
     conn = connect_db()
     if conn:
@@ -93,7 +78,6 @@ def create_series(data):
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Función CRUD: Leer todas las series
 def read_series():
     conn = connect_db()
     if conn:
@@ -109,7 +93,6 @@ def read_series():
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Función CRUD: Eliminar una película
 def delete_movie(id):
     conn = connect_db()
     if conn:
@@ -125,7 +108,6 @@ def delete_movie(id):
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Función CRUD: Eliminar una serie
 def delete_series(id):
     conn = connect_db()
     if conn:
@@ -141,7 +123,6 @@ def delete_series(id):
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Función CRUD: Actualizar una película
 def update_movie(id, data):
     conn = connect_db()
     if conn:
@@ -158,7 +139,6 @@ def update_movie(id, data):
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Función CRUD: Actualizar una serie
 def update_series(id, data):
     conn = connect_db()
     if conn:
@@ -175,64 +155,56 @@ def update_series(id, data):
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Ruta para listar todas las películas
+# Rutas para API
 @app.route('/api/peliculas', methods=['GET'])
 def listar_peliculas():
     peliculas, status_code = read_movies()
     return jsonify(peliculas), status_code
 
-# Ruta para agregar una nueva película
 @app.route('/api/peliculas', methods=['POST'])
 def agregar_pelicula():
     data = request.json
     response, status_code = create_movie(data)
     return jsonify(response), status_code
 
-# Ruta para eliminar una película
 @app.route('/api/peliculas/<int:id>', methods=['DELETE'])
 def eliminar_pelicula(id):
     response, status_code = delete_movie(id)
     return jsonify(response), status_code
 
-# Ruta para actualizar una película
 @app.route('/api/peliculas/<int:id>', methods=['PUT'])
 def actualizar_pelicula(id):
     data = request.json
     response, status_code = update_movie(id, data)
     return jsonify(response), status_code
 
-# Ruta para listar todas las series
 @app.route('/api/series', methods=['GET'])
 def listar_series():
     series, status_code = read_series()
     return jsonify(series), status_code
 
-# Ruta para agregar una nueva serie
 @app.route('/api/series', methods=['POST'])
 def agregar_serie():
     data = request.json
     response, status_code = create_series(data)
     return jsonify(response), status_code
 
-# Ruta para eliminar una serie
 @app.route('/api/series/<int:id>', methods=['DELETE'])
 def eliminar_serie(id):
     response, status_code = delete_series(id)
     return jsonify(response), status_code
 
-# Ruta para actualizar una serie
 @app.route('/api/series/<int:id>', methods=['PUT'])
 def actualizar_serie(id):
     data = request.json
     response, status_code = update_series(id, data)
     return jsonify(response), status_code
 
-# Ruta para cargar película desde el navegador
+# Rutas para páginas HTML
 @app.route('/cargar_pelicula')
 def cargar_pelicula():
     return render_template('cargar_pelicula.html')
 
-# Ruta para cargar serie desde el navegador
 @app.route('/cargar_serie')
 def cargar_serie():
     return render_template('cargar_serie.html')
