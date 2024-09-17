@@ -1,19 +1,32 @@
 from flask import Flask, request, jsonify, render_template
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import os
 
 app = Flask(__name__)
+
+# Conexión a la base de datos PostgreSQL
+import os
+from flask import Flask, request, jsonify, render_template
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    # Your code to handle the root path request
+    return "Welcome to my Flask app!"
 
 # Conexión a la base de datos PostgreSQL usando variables de entorno
 def connect_db():
     try:
         conn = psycopg2.connect(
-            dbname=os.getenv('DB_NAME'),
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASSWORD'),
-            host=os.getenv('DB_HOST'),
-            port=os.getenv('DB_PORT')
+            dbname=os.getenv('DB_NAME', 'bouinetzwnfsu76o1zlr'),
+            user=os.getenv('DB_USER', 'u6nzvrfvpmi9ucxmomlu'),
+            password=os.getenv('DB_PASSWORD', 'ieafyev5G4hqdpeoADfzxlBDkLQfO9'),
+            host=os.getenv('DB_HOST', 'bouinetzwnfsu76o1zlr-postgresql.services.clever-cloud.com'),
+            port=os.getenv('DB_PORT', '50013')
         )
         return conn
     except Exception as e:
@@ -96,30 +109,122 @@ def read_series():
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 
-# Ruta para listar todas las películas (usar función CRUD)
+# Función CRUD: Eliminar una película
+def delete_movie(id):
+    conn = connect_db()
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('DELETE FROM peliculas WHERE id = %s', (id,))
+            conn.commit()
+            return {"mensaje": "Película eliminada exitosamente."}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+        finally:
+            conn.close()
+    else:
+        return {"error": "Error al conectar a la base de datos"}, 500
+
+# Función CRUD: Eliminar una serie
+def delete_series(id):
+    conn = connect_db()
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('DELETE FROM serie WHERE id = %s', (id,))
+            conn.commit()
+            return {"mensaje": "Serie eliminada exitosamente."}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+        finally:
+            conn.close()
+    else:
+        return {"error": "Error al conectar a la base de datos"}, 500
+
+# Función CRUD: Actualizar una película
+def update_movie(id, data):
+    conn = connect_db()
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('UPDATE peliculas SET titulo = %s, director = %s, genero = %s, "año" = %s WHERE id = %s', 
+                           (data['titulo'], data['director'], data['genero'], data['año'], id))
+            conn.commit()
+            return {"mensaje": "Película actualizada exitosamente."}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+        finally:
+            conn.close()
+    else:
+        return {"error": "Error al conectar a la base de datos"}, 500
+
+# Función CRUD: Actualizar una serie
+def update_series(id, data):
+    conn = connect_db()
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('UPDATE serie SET titulo = %s, director = %s, genero = %s, temporadas = %s, episodios = %s, año_estreno = %s, descripcion = %s WHERE id = %s', 
+                           (data['titulo'], data['director'], data['genero'], data['temporadas'], data['episodios'], data['año_estreno'], data['descripcion'], id))
+            conn.commit()
+            return {"mensaje": "Serie actualizada exitosamente."}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+        finally:
+            conn.close()
+    else:
+        return {"error": "Error al conectar a la base de datos"}, 500
+
+# Ruta para listar todas las películas
 @app.route('/api/peliculas', methods=['GET'])
 def listar_peliculas():
     peliculas, status_code = read_movies()
     return jsonify(peliculas), status_code
 
-# Ruta para agregar una nueva película (usar función CRUD)
+# Ruta para agregar una nueva película
 @app.route('/api/peliculas', methods=['POST'])
 def agregar_pelicula():
     data = request.json
     response, status_code = create_movie(data)
     return jsonify(response), status_code
 
-# Ruta para listar todas las series (usar función CRUD)
+# Ruta para eliminar una película
+@app.route('/api/peliculas/<int:id>', methods=['DELETE'])
+def eliminar_pelicula(id):
+    response, status_code = delete_movie(id)
+    return jsonify(response), status_code
+
+# Ruta para actualizar una película
+@app.route('/api/peliculas/<int:id>', methods=['PUT'])
+def actualizar_pelicula(id):
+    data = request.json
+    response, status_code = update_movie(id, data)
+    return jsonify(response), status_code
+
+# Ruta para listar todas las series
 @app.route('/api/series', methods=['GET'])
 def listar_series():
     series, status_code = read_series()
     return jsonify(series), status_code
 
-# Ruta para agregar una nueva serie (usar función CRUD)
+# Ruta para agregar una nueva serie
 @app.route('/api/series', methods=['POST'])
 def agregar_serie():
     data = request.json
     response, status_code = create_series(data)
+    return jsonify(response), status_code
+
+# Ruta para eliminar una serie
+@app.route('/api/series/<int:id>', methods=['DELETE'])
+def eliminar_serie(id):
+    response, status_code = delete_series(id)
+    return jsonify(response), status_code
+
+# Ruta para actualizar una serie
+@app.route('/api/series/<int:id>', methods=['PUT'])
+def actualizar_serie(id):
+    data = request.json
+    response, status_code = update_series(id, data)
     return jsonify(response), status_code
 
 # Ruta para cargar película desde el navegador
@@ -134,4 +239,5 @@ def cargar_serie():
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=os.getenv('PORT', 5000))
+
 
