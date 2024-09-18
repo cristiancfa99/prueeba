@@ -180,8 +180,8 @@ def cargar_pelicula():
 def cargar_serie():
     return render_template('cargar_serie.html')
 
-# Ejecutar aplicación en el puerto de la variable de entorno o por defecto 5000
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
+    # Usa la variable de entorno PORT si está disponible, de lo contrario usa 5000
+    port = int(os.environ.get('PORT', 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
 
