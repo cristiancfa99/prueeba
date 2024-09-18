@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
@@ -154,7 +154,6 @@ def update_series(id, data):
             conn.close()
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
-
 # Rutas para API
 @app.route('/api/peliculas', methods=['GET'])
 def listar_peliculas():
@@ -167,40 +166,12 @@ def agregar_pelicula():
     response, status_code = create_movie(data)
     return jsonify(response), status_code
 
-@app.route('/api/peliculas/<int:id>', methods=['DELETE'])
-def eliminar_pelicula(id):
-    response, status_code = delete_movie(id)
-    return jsonify(response), status_code
-
-@app.route('/api/peliculas/<int:id>', methods=['PUT'])
-def actualizar_pelicula(id):
-    data = request.json
-    response, status_code = update_movie(id, data)
-    return jsonify(response), status_code
-
-@app.route('/api/series', methods=['GET'])
-def listar_series():
-    series, status_code = read_series()
-    return jsonify(series), status_code
-
-@app.route('/api/series', methods=['POST'])
-def agregar_serie():
-    data = request.json
-    response, status_code = create_series(data)
-    return jsonify(response), status_code
-
-@app.route('/api/series/<int:id>', methods=['DELETE'])
-def eliminar_serie(id):
-    response, status_code = delete_series(id)
-    return jsonify(response), status_code
-
-@app.route('/api/series/<int:id>', methods=['PUT'])
-def actualizar_serie(id):
-    data = request.json
-    response, status_code = update_series(id, data)
-    return jsonify(response), status_code
-
 # Rutas para páginas HTML
+@app.route('/')
+def index():
+    # Redirige a la página de cargar película
+    return redirect('/cargar_pelicula')
+
 @app.route('/cargar_pelicula')
 def cargar_pelicula():
     return render_template('cargar_pelicula.html')
@@ -209,7 +180,8 @@ def cargar_pelicula():
 def cargar_serie():
     return render_template('cargar_serie.html')
 
+# Ejecutar aplicación en el puerto de la variable de entorno o por defecto 5000
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=os.getenv('PORT', 5000))
-
+    port = int(os.getenv('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
 
