@@ -183,5 +183,5 @@ def cargar_serie():
 if __name__ == '__main__':
     # Usa la variable de entorno PORT si está disponible, de lo contrario usa 5000
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=os.getenv('PORT', 5000))
 
