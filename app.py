@@ -155,6 +155,7 @@ def update_series(id, data):
     else:
         return {"error": "Error al conectar a la base de datos"}, 500
 # Rutas para API
+
 @app.route('/api/peliculas', methods=['GET'])
 def listar_peliculas():
     peliculas, status_code = read_movies()
@@ -169,8 +170,8 @@ def agregar_pelicula():
 # Rutas para páginas HTML
 @app.route('/')
 def index():
-    # Redirige a la página de cargar película
-    return redirect('/cargar_pelicula')
+    # Redirige a la página de bienvenida o a cargar película
+    return render_template('index.html')  # Asegúrate de tener una plantilla index.html
 
 @app.route('/cargar_pelicula')
 def cargar_pelicula():
@@ -183,5 +184,5 @@ def cargar_serie():
 if __name__ == '__main__':
     # Usa la variable de entorno PORT si está disponible, de lo contrario usa 5000
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=os.getenv('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
 
