@@ -1,11 +1,13 @@
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+from functools import wraps
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Cambia esto por una clave secreta segura
 
-# Conexión a la base de datos PostgreSQL usando variables de entorno
+# Conexión a la base de datos PostgreSQL
 def connect_db():
     try:
         conn = psycopg2.connect(
@@ -20,169 +22,71 @@ def connect_db():
         print(f"Error al conectar a la base de datos: {e}")
         return None
 
-# Funciones CRUD
-def create_movie(data):
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            titulo = data['titulo'].upper()
-            cursor.execute('SELECT COUNT(*) FROM peliculas WHERE titulo = %s', (titulo,))
-            if cursor.fetchone()[0] > 0:
-                return {"error": "El título de la película ya existe."}, 400
-            else:
-                cursor.execute('INSERT INTO peliculas (titulo, director, genero, "año") VALUES (%s, %s, %s, %s)', 
-                               (titulo, data['director'], data['genero'], data['año']))
-                conn.commit()
-                return {"mensaje": "Película agregada exitosamente."}, 201
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
+# Decorador para rutas protegidas
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            flash('Por favor, inicia sesión primero.', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-def read_movies():
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            cursor.execute("SELECT * FROM peliculas")
-            peliculas = cursor.fetchall()
-            return peliculas, 200
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
+# Ruta para la página de inicio de sesión
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
 
-def create_series(data):
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            titulo = data['titulo'].upper()
-            cursor.execute('SELECT * FROM serie WHERE titulo = %s', (titulo,))
-            if cursor.fetchone():
-                return {"error": "El título de la serie ya existe."}, 400
-            else:
-                cursor.execute('INSERT INTO serie (titulo, director, genero, temporadas, episodios, año_estreno, descripcion) VALUES (%s, %s, %s, %s, %s, %s, %s)', 
-                               (titulo, data['director'], data['genero'], data['temporadas'], data['episodios'], data['año_estreno'], data['descripcion']))
-                conn.commit()
-                return {"mensaje": "Serie agregada exitosamente."}, 201
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
+        conn = connect_db()
+        if conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            try:
+                cursor.execute('SELECT * FROM usuarios WHERE username = %s AND password = %s', (username, password))
+                user = cursor.fetchone()
+                if user:
+                    session['logged_in'] = True
+                    session['username'] = user['username']
+                    flash(f'Bienvenido, {user["username"]}!', 'success')
+                    return redirect(url_for('index'))
+                else:
+                    flash('Usuario o contraseña incorrectos', 'danger')
+            except Exception as e:
+                flash(f'Error al buscar el usuario: {e}', 'danger')
+            finally:
+                conn.close()
+        else:
+            flash('Error al conectar a la base de datos', 'danger')
 
-def read_series():
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            cursor.execute("SELECT * FROM serie")
-            series = cursor.fetchall()
-            return series, 200
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
+    return render_template('login.html')
 
-def delete_movie(id):
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute('DELETE FROM peliculas WHERE id = %s', (id,))
-            conn.commit()
-            return {"mensaje": "Película eliminada exitosamente."}, 200
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
+# Ruta para cerrar sesión
+@app.route('/logout')
+@login_required
+def logout():
+    session.clear()
+    flash('Has cerrado sesión', 'info')
+    return redirect(url_for('login'))
 
-def delete_series(id):
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute('DELETE FROM serie WHERE id = %s', (id,))
-            conn.commit()
-            return {"mensaje": "Serie eliminada exitosamente."}, 200
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
-
-def update_movie(id, data):
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute('UPDATE peliculas SET titulo = %s, director = %s, genero = %s, "año" = %s WHERE id = %s', 
-                           (data['titulo'], data['director'], data['genero'], data['año'], id))
-            conn.commit()
-            return {"mensaje": "Película actualizada exitosamente."}, 200
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
-
-def update_series(id, data):
-    conn = connect_db()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute('UPDATE serie SET titulo = %s, director = %s, genero = %s, temporadas = %s, episodios = %s, año_estreno = %s, descripcion = %s WHERE id = %s', 
-                           (data['titulo'], data['director'], data['genero'], data['temporadas'], data['episodios'], data['año_estreno'], data['descripcion'], id))
-            conn.commit()
-            return {"mensaje": "Serie actualizada exitosamente."}, 200
-        except Exception as e:
-            return {"error": str(e)}, 500
-        finally:
-            conn.close()
-    else:
-        return {"error": "Error al conectar a la base de datos"}, 500
-# Rutas para API
-
-@app.route('/api/peliculas', methods=['GET'])
-def listar_peliculas():
-    peliculas, status_code = read_movies()
-    return jsonify(peliculas), status_code
-
-@app.route('/api/peliculas', methods=['POST'])
-def agregar_pelicula():
-    data = request.json
-    response, status_code = create_movie(data)
-    return jsonify(response), status_code
-
-# Rutas para páginas HTML
+# Ruta protegida, solo accesible si el usuario está autenticado
 @app.route('/')
+@login_required
 def index():
-    # Redirige a la página de bienvenida o a cargar película
-    return render_template('index.html')  # Asegúrate de tener una plantilla index.html
+    return redirect(url_for('cargar_pelicula'))
 
+# Rutas para cargar películas y series, ahora protegidas
 @app.route('/cargar_pelicula')
+@login_required
 def cargar_pelicula():
     return render_template('cargar_pelicula.html')
 
 @app.route('/cargar_serie')
+@login_required
 def cargar_serie():
     return render_template('cargar_serie.html')
 
 if __name__ == '__main__':
-    # Usa la variable de entorno PORT si está disponible, de lo contrario usa 5000
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
 
