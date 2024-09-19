@@ -3,9 +3,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 from functools import wraps
+import bcrypt  # Asegúrate de haber instalado bcrypt
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Cambia esto por una clave secreta segura
+app.secret_key = 'Cistian@1232'  # Cambia esto por una clave secreta segura
 
 # Conexión a la base de datos PostgreSQL
 def connect_db():
@@ -43,9 +44,12 @@ def login():
         if conn:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             try:
-                cursor.execute('SELECT * FROM usuarios WHERE username = %s AND password = %s', (username, password))
+                # Busca el usuario en la base de datos usando el nombre de usuario
+                cursor.execute('SELECT * FROM usuarios WHERE username = %s', (username,))
                 user = cursor.fetchone()
-                if user:
+                
+                if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+                    # Si el hash coincide, el usuario está autenticado
                     session['logged_in'] = True
                     session['username'] = user['username']
                     flash(f'Bienvenido, {user["username"]}!', 'success')
@@ -89,4 +93,5 @@ def cargar_serie():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
