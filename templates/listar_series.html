@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listar Series</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://www.lavanguardia.com/files/image_990_484/uploads/2021/10/14/61680d9336e55.jpeg');
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+        }
+        nav {
+            margin-bottom: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+        }
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+        h1 {
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+        .series-list {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            max-width: 600px;
+            max-height: 400px; /* Altura máxima */
+            overflow-y: auto; /* Desplazamiento vertical si es necesario */
+            margin: 20px auto; /* Espacio superior e inferior */
+        }
+        .serie {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .serie:last-child {
+            border-bottom: none;
+        }
+        .boton-eliminar {
+            background-color: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .boton-eliminar:hover {
+            background-color: #c0392b;
+        }
+        .mensaje {
+            text-align: center;
+            color: #fff; /* Color de texto blanco */
+        }
+        .form-busqueda {
+            margin: 20px 0; /* Margen superior e inferior */
+        }
+        .form-busqueda input, .form-busqueda button {
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .form-busqueda button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        .form-busqueda button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">Volver al Inicio</a>
+        <a href="{{ url_for('cargar_serie') }}">Agregar Nueva Serie</a>
+    </nav>
+
+    <h1>Listar Series</h1>
+
+    <form method="GET" action="{{ url_for('listar_series') }}" class="form-busqueda">
+        <input type="text" name="titulo" placeholder="Buscar por título" value="{{ titulo }}">
+        <input type="number" name="año" placeholder="Año de Estreno" value="{{ año }}">
+        <button type="submit">Buscar</button>
+    </form>
+
+    <div class="series-list">
+        {% if series %}
+            {% for serie in series %}
+                <div class="serie">
+                    <h3>{{ serie.titulo }}</h3>
+                    <p><strong>Director:</strong> {{ serie.director }}</p>
+                    <p><strong>Género:</strong> {{ serie.genero }}</p>
+                    <p><strong>Temporadas:</strong> {{ serie.temporadas }}</p>
+                    <p><strong>Episodios:</strong> {{ serie.episodios }}</p>
+                    <p><strong>Año de Estreno:</strong> {{ serie.año_estreno }}</p>
+                    <p><strong>Descripción:</strong> {{ serie.descripcion }}</p>
+                    <form action="{{ url_for('eliminar_serie', id=serie.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="boton-eliminar">Eliminar</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="mensaje">No hay series disponibles.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

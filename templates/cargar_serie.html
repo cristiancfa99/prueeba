@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Serie</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://www.lavanguardia.com/files/image_990_484/uploads/2021/10/14/61680d9336e55.jpeg');
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        nav {
+            margin-bottom: 20px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+        }
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+        form {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            width: 300px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('listar_series') }}">Listar Series</a>
+        <a href="{{ url_for('index') }}">Volver al Inicio</a>
+    </nav>
+    
+    <form id="serieForm">
+        <h1>Cargar Nueva Serie</h1>
+        <label for="titulo">Título:</label>
+        <input type="text" id="titulo" name="titulo" required>
+        <label for="director">Director:</label>
+        <input type="text" id="director" name="director" required>
+        <label for="genero">Género:</label>
+        <input type="text" id="genero" name="genero" required>
+        <label for="temporadas">Número de Temporadas:</label>
+        <input type="number" id="temporadas" name="temporadas" required>
+        <label for="episodios">Número de Episodios:</label>
+        <input type="number" id="episodios" name="episodios" required>
+        <label for="año_estreno">Año de Estreno:</label>
+        <input type="number" id="año_estreno" name="año_estreno" required>
+        <label for="descripcion">Descripción:</label>
+        <textarea id="descripcion" name="descripcion" required></textarea>
+        <button type="submit">Agregar Serie</button>
+    </form>    
+
+    <script>
+    document.getElementById('serieForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const datos = {
+            titulo: document.getElementById('titulo').value,
+            director: document.getElementById('director').value,
+            genero: document.getElementById('genero').value,
+            temporadas: document.getElementById('temporadas').value,
+            episodios: document.getElementById('episodios').value,
+            año_estreno: document.getElementById('año_estreno').value,
+            descripcion: document.getElementById('descripcion').value
+        };
+
+        fetch('/api/series', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(datos)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            if (data.message) {
+                alert(data.message);
+                window.location.href = "{{ url_for('listar_series') }}";
+            } else {
+                alert('Error al agregar la serie: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+    </script>
+</body>
+</html>
