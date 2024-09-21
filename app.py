@@ -17,7 +17,7 @@ def connect_db():
             dbname='mi_api_db',
             user='cris_usuario',
             password='cris1232',
-            host='localhost',
+            host='5c8d453ef47e6746a591a929cde0592.serveo.net',
             port='5432'
         )
         return conn
