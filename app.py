@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = 'cris1232'  # Cambia esto por una clave secreta segura
 
 # Usuario administrador
-ADMIN_USERS = ['cristiancfa']  # Cambia esto por los nombres de usuario permitidos
+ADMIN_USERS = ['cristiancfa','coceres']  # Cambia esto por los nombres de usuario permitidos
 
 def connect_db():
     try:
@@ -120,26 +120,20 @@ def agregar_pelicula():
     data = request.get_json()
     print(data)  # Imprimir los datos recibidos
 
-    if not all(key in data for key in ['titulo', 'director', 'genero', 'año']):  # Elimina 'id'
+    # Verifica que los datos requeridos estén presentes
+    if not all(key in data for key in ['titulo', 'director', 'genero']):  # No se solicita 'ano'
         return jsonify({'error': 'Faltan datos requeridos'}), 400
 
     titulo = data.get('titulo').upper()
     director = data.get('director')
     genero = data.get('genero')
-    año = data.get('año')
-
-    # Asegúrate de convertir año a entero
-    try:
-        año = int(año)
-    except ValueError:
-        return jsonify({'error': 'El año debe ser un número entero'}), 400
 
     conn = connect_db()
     if conn:
         cursor = conn.cursor()
         try:
-            print(f"Insertando: {titulo}, {director}, {genero}, {año}")  # Imprimir valores
-            cursor.execute('INSERT INTO peliculas (titulo, director, genero, "año") VALUES (%s, %s, %s, %s)', (titulo, director, genero, año))
+            print(f"Insertando: {titulo}, {director}, {genero}")  # Imprimir valores
+            cursor.execute('INSERT INTO peliculas (titulo, director, genero) VALUES (%s, %s, %s)', (titulo, director, genero))  # Sin 'ano'
             conn.commit()
             return jsonify({'message': 'Película agregada exitosamente'}), 201
         except Exception as e:
@@ -172,7 +166,6 @@ def eliminar_pelicula(id):
 @admin_required
 def listar_peliculas():
     titulo = request.args.get('titulo', '')
-    año = request.args.get('año', '')
 
     conn = connect_db()
     if conn:
@@ -183,14 +176,11 @@ def listar_peliculas():
         if titulo:
             query += ' AND UPPER(titulo) LIKE %s'
             params.append(f'%{titulo.upper()}%')
-        if año:
-            query += ' AND año = %s'
-            params.append(año)
 
         cursor.execute(query, params)
         peliculas = cursor.fetchall()
         conn.close()
-        return render_template('listar_peliculas.html', peliculas=peliculas, titulo=titulo, año=año)
+        return render_template('listar_peliculas.html', peliculas=peliculas, titulo=titulo)
 
     return 'Error al conectar a la base de datos', 500
 
@@ -282,6 +272,11 @@ def listar_series():
         return render_template('listar_series.html', series=series, titulo=titulo, año=año)
 
     return 'Error al conectar a la base de datos', 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
