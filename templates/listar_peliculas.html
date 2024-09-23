@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listar Películas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://www.lavanguardia.com/files/image_990_484/uploads/2021/10/14/61680d9336e55.jpeg');
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+        .peliculas-list {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            max-width: 600px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px auto;
+        }
+        .pelicula {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .pelicula:last-child {
+            border-bottom: none;
+        }
+        .boton-eliminar {
+            background-color: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .boton-eliminar:hover {
+            background-color: #c0392b;
+        }
+        .mensaje {
+            text-align: center;
+            color: #fff;
+        }
+        .form-busqueda {
+            margin: 20px 0;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button {
+            background-color: #2980b9;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3498db;
+        }
+        nav {
+            margin-bottom: 20px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+        }
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('cargar_pelicula') }}">Agregar Nueva Película</a>
+        <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+        <a href="{{ url_for('index') }}">Volver al Inicio</a>
+    </nav>
+    
+    <h1>Listar Películas</h1>
+    <form method="GET" action="{{ url_for('listar_peliculas') }}" class="form-busqueda">
+        <input type="text" name="titulo" placeholder="Buscar por título" value="{{ titulo }}">
+        <input type="number" name="año" placeholder="Año de Estreno" value="{{ año }}">
+        <button type="submit">Buscar</button>
+    </form>
+    <div class="peliculas-list">
+        {% if peliculas %}
+            {% for pelicula in peliculas %}
+                <div class="pelicula">
+                    <h3>{{ pelicula.titulo }}</h3>
+                    <p><strong>Director:</strong> {{ pelicula.director }}</p>
+                    <p><strong>Género:</strong> {{ pelicula.genero }}</p>
+                    <p><strong>Año:</strong> {{ pelicula.año }}</p>
+                    <form action="{{ url_for('eliminar_pelicula', id=pelicula.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="boton-eliminar">Eliminar</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="mensaje">No hay películas disponibles.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
