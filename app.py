@@ -10,22 +10,21 @@ app.secret_key = 'cris1232'  # Cambia esto por una clave secreta segura
 # Usuario administrador
 ADMIN_USERS = ['cristiancfa']  # Cambia esto por los nombres de usuario permitidos
 
-# Conexión a la base de datos PostgreSQL local
 def connect_db():
     try:
         conn = psycopg2.connect(
-            dbname='mi_api_db',
-            user='cris_usuario',
-            password='cris1232',
-            host='5c8d453ef47e6746a591a929cde0592.serveo.net',
-            port='5432'
+            dbname='bnmtshjy0t7ckmhsqyz1',
+            user='uek5h49jfgqinljgrire',
+            password='LQF4QumsoMp7tPKDEECN21Rs2rrprG',
+            host='bnmtshjy0t7ckmhsqyz1-postgresql.services.clever-cloud.com',
+            port='50013'
         )
+        print("Conexión a la base de datos exitosa.")
         return conn
     except Exception as e:
         print(f"Error al conectar a la base de datos: {e}")
         return None
 
-# Decorador para rutas protegidas
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -35,17 +34,15 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Decorador para verificar si el usuario es administrador
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in session or session['username'] not in ADMIN_USERS:
             flash('No tienes permiso para acceder a esta página.', 'danger')
-            return redirect(url_for('index'))  # Redirige al índice o a otra página
+            return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
 
-# Ruta para la página de inicio de sesión
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -74,7 +71,6 @@ def login():
 
     return render_template('login.html')
 
-# Ruta para cerrar sesión
 @app.route('/logout')
 @login_required
 def logout():
@@ -82,11 +78,34 @@ def logout():
     flash('Has cerrado sesión', 'info')
     return redirect(url_for('login'))
 
-# Ruta protegida
 @app.route('/')
 @login_required
 def index():
     return render_template('welcome.html', ADMIN_USERS=ADMIN_USERS)
+
+@app.route('/register', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        conn = connect_db()
+        if conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute('INSERT INTO usuarios (username, password) VALUES (%s, %s)', (username, password))
+                conn.commit()
+                flash('Usuario registrado exitosamente', 'success')
+                return redirect(url_for('index'))
+            except Exception as e:
+                flash(f'Error al registrar usuario: {e}', 'danger')
+            finally:
+                conn.close()
+        else:
+            flash('Error al conectar a la base de datos', 'danger')
+    return render_template('register.html')
 
 @app.route('/cargar_pelicula', methods=['GET', 'POST'])
 @login_required
@@ -99,20 +118,28 @@ def cargar_pelicula():
 @login_required
 def agregar_pelicula():
     data = request.get_json()
-    if not all(key in data for key in ['titulo', 'director', 'genero', 'año']):
+    print(data)  # Imprimir los datos recibidos
+
+    if not all(key in data for key in ['titulo', 'director', 'genero', 'año']):  # Elimina 'id'
         return jsonify({'error': 'Faltan datos requeridos'}), 400
-    
+
     titulo = data.get('titulo').upper()
     director = data.get('director')
     genero = data.get('genero')
     año = data.get('año')
 
+    # Asegúrate de convertir año a entero
+    try:
+        año = int(año)
+    except ValueError:
+        return jsonify({'error': 'El año debe ser un número entero'}), 400
+
     conn = connect_db()
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute('INSERT INTO peliculas (titulo, director, genero, año) VALUES (%s, %s, %s, %s)',
-                           (titulo, director, genero, año))
+            print(f"Insertando: {titulo}, {director}, {genero}, {año}")  # Imprimir valores
+            cursor.execute('INSERT INTO peliculas (titulo, director, genero, "año") VALUES (%s, %s, %s, %s)', (titulo, director, genero, año))
             conn.commit()
             return jsonify({'message': 'Película agregada exitosamente'}), 201
         except Exception as e:
@@ -140,18 +167,31 @@ def eliminar_pelicula(id):
             conn.close()
     return jsonify({'error': 'Error al conectar a la base de datos'}), 500
 
-
 @app.route('/listar_peliculas', methods=['GET'])
 @login_required
-@admin_required  # Aplica el decorador de administrador
+@admin_required
 def listar_peliculas():
+    titulo = request.args.get('titulo', '')
+    año = request.args.get('año', '')
+
     conn = connect_db()
     if conn:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute('SELECT * FROM peliculas')
+        query = 'SELECT * FROM peliculas WHERE 1=1'
+        params = []
+
+        if titulo:
+            query += ' AND UPPER(titulo) LIKE %s'
+            params.append(f'%{titulo.upper()}%')
+        if año:
+            query += ' AND año = %s'
+            params.append(año)
+
+        cursor.execute(query, params)
         peliculas = cursor.fetchall()
         conn.close()
-        return render_template('listar_peliculas.html', peliculas=peliculas)
+        return render_template('listar_peliculas.html', peliculas=peliculas, titulo=titulo, año=año)
+
     return 'Error al conectar a la base de datos', 500
 
 # Rutas para cargar y listar series
@@ -162,42 +202,14 @@ def cargar_serie():
         return agregar_serie()
     return render_template('cargar_serie.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-@login_required
-@admin_required  # Solo los administradores pueden registrar usuarios
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        
-        conn = connect_db()
-        if conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute('INSERT INTO usuarios (username, password) VALUES (%s, %s)', (username, password))
-                conn.commit()
-                flash('Usuario registrado exitosamente', 'success')
-                return redirect(url_for('index'))
-            except Exception as e:
-                flash(f'Error al registrar usuario: {e}', 'danger')
-            finally:
-                conn.close()
-        else:
-            flash('Error al conectar a la base de datos', 'danger')
-    return render_template('register.html')
-
-
 @app.route('/api/series', methods=['POST'])
 @login_required
 def agregar_serie():
-    data = request.get_json()  # Cambiado a get_json()
-    print(data)  # Para depuración
-
-    # Asegúrate de que todas las claves están presentes
+    data = request.get_json()
+    
     if not all(key in data for key in ['titulo', 'director', 'genero', 'temporadas', 'episodios', 'año_estreno', 'descripcion']):
         return jsonify({'error': 'Faltan datos requeridos'}), 400
 
-    # Extraer los datos
     titulo = data.get('titulo').upper()
     director = data.get('director')
     genero = data.get('genero')
@@ -206,18 +218,10 @@ def agregar_serie():
     año_estreno = data.get('año_estreno')
     descripcion = data.get('descripcion')
 
-    # Aquí sigue el resto de tu lógica para agregar la serie a la base de datos
-
-
-    # Validar que el título no esté vacío
-    if not titulo:
-        return jsonify({'error': 'El título es requerido'}), 400
-
     conn = connect_db()
     if conn:
         cursor = conn.cursor()
         try:
-            # Insertar los datos en la base de datos
             cursor.execute(
                 'INSERT INTO series (titulo, director, genero, temporadas, episodios, año_estreno, descripcion) VALUES (%s, %s, %s, %s, %s, %s, %s)',
                 (titulo, director, genero, temporadas, episodios, año_estreno, descripcion)
@@ -231,11 +235,11 @@ def agregar_serie():
             conn.close()
     
     return jsonify({'error': 'Error al conectar a la base de datos'}), 500
+      
 
-
-
-@app.route('/api/series/<int:id>', methods=['DELETE'])
+@app.route('/eliminar_serie/<int:id>', methods=['POST'])
 @login_required
+@admin_required
 def eliminar_serie(id):
     conn = connect_db()
     if conn:
@@ -243,45 +247,43 @@ def eliminar_serie(id):
         try:
             cursor.execute('DELETE FROM series WHERE id = %s', (id,))
             conn.commit()
-            return jsonify({'message': 'Serie eliminada exitosamente'}), 200
+            flash('Serie eliminada exitosamente', 'success')
+            return redirect(url_for('listar_series'))
         except Exception as e:
             print(f"Error al eliminar serie: {e}")
-            return jsonify({'error': 'Error al eliminar la serie.'}), 500
+            flash('Error al eliminar la serie', 'danger')
         finally:
             conn.close()
     return jsonify({'error': 'Error al conectar a la base de datos'}), 500
 
 @app.route('/listar_series', methods=['GET'])
 @login_required
-@admin_required  # Aplica el decorador de administrador
+@admin_required
 def listar_series():
+    titulo = request.args.get('titulo', '')
+    año = request.args.get('año', '')
+
     conn = connect_db()
     if conn:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Obtener parámetros de búsqueda
-        titulo_busqueda = request.args.get('titulo', '')
-        año_busqueda = request.args.get('año', '')
-        
-        # Construir la consulta
         query = 'SELECT * FROM series WHERE 1=1'
         params = []
-        
-        if titulo_busqueda:
-            query += ' AND titulo ILIKE %s'
-            params.append(f'%{titulo_busqueda}%')
-        
-        if año_busqueda:
+
+        if titulo:
+            query += ' AND UPPER(titulo) LIKE %s'
+            params.append(f'%{titulo.upper()}%')
+        if año:
             query += ' AND año_estreno = %s'
-            params.append(año_busqueda)
+            params.append(año)
 
         cursor.execute(query, params)
         series = cursor.fetchall()
         conn.close()
-        return render_template('listar_series.html', series=series, titulo=titulo_busqueda, año=año_busqueda)
-    
+        return render_template('listar_series.html', series=series, titulo=titulo, año=año)
+
     return 'Error al conectar a la base de datos', 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
