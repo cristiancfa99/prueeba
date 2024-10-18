@@ -5,10 +5,10 @@ from functools import wraps
 import os
 
 app = Flask(__name__)
-app.secret_key = 'cris1232'  # Cambia esto por una clave secreta segura
+app.secret_key = 'cris1232'
 
 # Usuario administrador
-ADMIN_USERS = ['cristiancfa','coceres']  # Cambia esto por los nombres de usuario permitidos
+ADMIN_USERS = ['cristiancfa','coceres']  
 
 def connect_db():
     try:
@@ -120,8 +120,8 @@ def agregar_pelicula():
     data = request.get_json()
     print(data)  # Imprimir los datos recibidos
 
-    # Verifica que los datos requeridos estén presentes
-    if not all(key in data for key in ['titulo', 'director', 'genero']):  # No se solicita 'ano'
+    
+    if not all(key in data for key in ['titulo', 'director', 'genero']):  
         return jsonify({'error': 'Faltan datos requeridos'}), 400
 
     titulo = data.get('titulo').upper()
@@ -133,7 +133,7 @@ def agregar_pelicula():
         cursor = conn.cursor()
         try:
             print(f"Insertando: {titulo}, {director}, {genero}")  # Imprimir valores
-            cursor.execute('INSERT INTO peliculas (titulo, director, genero) VALUES (%s, %s, %s)', (titulo, director, genero))  # Sin 'ano'
+            cursor.execute('INSERT INTO peliculas (titulo, director, genero) VALUES (%s, %s, %s)', (titulo, director, genero)) 
             conn.commit()
             return jsonify({'message': 'Película agregada exitosamente'}), 201
         except Exception as e:
